@@ -156,7 +156,7 @@ def compute_grad(best_sql, new_sql, type, target_value):
         card1 = res["e_cardinality"]
         card1 = card1 if card1 != 0 else 1
         if isinstance(target_value, int): # value
-            err1 = max(card1 / target_value, target_value / card1)
+            err1 = min(card1 / target_value, target_value / card1)
         else: # range
             lower_bound = target_value[0]
             upper_bound = target_value[1]
@@ -174,7 +174,7 @@ def compute_grad(best_sql, new_sql, type, target_value):
         card2 = res["e_cardinality"]
         card2 = card2 if card2 != 0 else 1
         if isinstance(target_value, int): # value
-            err2 = max(card2 / target_value, target_value / card2)
+            err2 = min(card2 / target_value, target_value / card2)
         else: # range
             lower_bound = target_value[0]
             upper_bound = target_value[1]
@@ -350,10 +350,12 @@ def hillclimb_generate_queries(dbname, type, target_value, error, num_queries, t
                 # print("[value]", step * (-col_range[p['col']]["min"] + col_range[p['col']]["max"]))
                 new_sql = select_parameter(x, p, tokens, step, col_range, best_sql)
                 err_new, err_best = compute_grad(best_sql, new_sql, type, target_value)
+                # print(err_new, err_best)
                 grad = (err_new - err_best)
                 if grad > max_grad:
                     best_sql = new_sql
                     max_grad = grad
+                    ok = is_required_sql(best_sql, type, target_value, error)
                     if err_new == 1:
                         ok = 1
                     # print("[current best]", new_sql)
@@ -365,6 +367,7 @@ def hillclimb_generate_queries(dbname, type, target_value, error, num_queries, t
                 if grad > max_grad:
                     best_sql = new_sql
                     max_grad = grad
+                    ok = is_required_sql(best_sql, type, target_value, error)
                     if err_new == 1:
                         ok = 1
                     # print("[current best]", new_sql)
@@ -399,7 +402,7 @@ def cal_point_time(dbname, pc, error, N, type, log_path, query_to_path):
 
     print("Generating {} queries meet point {} constraint:{} with acceptable error {} to '{}'".format(N, type, pc,
                                                                                                       error, log_path))
-    time.sleep(2)
+    time.sleep(1)
     satisfied_count = 0
     total_count = 0
 
@@ -414,6 +417,7 @@ def cal_point_time(dbname, pc, error, N, type, log_path, query_to_path):
         total_count = int(last_line.split(';')[2].split(':')[1])
     else:
         log = open(log_path, 'w')
+
     log.write("time:{};s_count:{};t_count:{}\n".format(str(time.time()), satisfied_count, total_count))
     low_bound = pc*(1 - error)
     up_bound = pc*(1 + error)
