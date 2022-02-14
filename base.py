@@ -293,7 +293,7 @@ class RelationGraph(object):
                 print("from:{} to:{}: {}".format(from_table, to_table, self.relation_graph[from_table][to_table]))
 
 
-def get_evaluate_query_info(dbname, sql):
+def get_evaluate_query_info(dbname, sql):  # 解释sql代价，explain only.
     conn, cursor = connect_server(dbname)
     try:
         cursor.execute('explain (format json)' + ' ' + sql)
@@ -315,7 +315,7 @@ def get_evaluate_query_info(dbname, sql):
         return 0, result
 
 
-def get_execute_query_info(dbname, sql):
+def get_execute_query_info(dbname, sql):  # 执行并估计代价
     conn, cursor = connect_server(dbname)
     try:
         cursor.execute("set statement_timeout to 60000")
@@ -354,7 +354,7 @@ def cal_file_e_info(dbname, fpath, tpath, cum=False):
     else:
         query_info = pd.read_csv(tpath, index_col=0)
     for i in range(len(queries)):
-        if queries[i] is '':
+        if queries[i] == '':
             break
         result, e_info = get_evaluate_query_info(dbname, queries[i])
         if i % 100 == 0:
@@ -431,7 +431,7 @@ def cal_point_accuracy(path, pc, error, type):
     satisfied_count = 0
     query_info = pd.read_csv(path, index_col=0)
     for index, row in query_info.iterrows():
-        if type is 'cost':
+        if type == 'cost':
             if low_bound <= row['total_cost'] <= up_bound:
                 satisfied_count += 1
         else:
@@ -447,7 +447,7 @@ def cal_range_accuracy(path, rc, type):
     satisfied_count = 0
     query_info = pd.read_csv(path, index_col=0)
     for index, row in query_info.iterrows():
-        if type is 'cost':
+        if type == 'cost':
             if low_bound <= row['total_cost'] <= up_bound:
                 satisfied_count += 1
         else:

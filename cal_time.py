@@ -1,5 +1,6 @@
 import os
 import time
+from copy import copy
 
 import pymysql
 
@@ -9,6 +10,12 @@ import psycopg2
 from enum import IntEnum
 
 # def cal_point_time(dbname, pc, error, N, type, log_path, query_to_path):
+
+def erase_endl(sql):
+    sql_n = copy(sql)
+    while not sql_n[0].isalpha():
+        sql_n = sql_n[1:]
+    return sql_n
 
 class DataType(IntEnum):
     VALUE = 0
@@ -344,17 +351,17 @@ def hillclimb_generate_queries(dbname, type, target_value, error, num_queries, t
             best_predicates = extract_predicates(best_sql, schema, tokens)
             max_grad = 0
 
-            for x, p in enumerate(best_predicates):
+            for x, p in enumerate(best_predicates):  # 枚举1层谓词加入到sql语句中
                 if not is_number(p["right"]):
                     continue
 
                 # (step)
                 # print("[value]", step * (-col_range[p['col']]["min"] + col_range[p['col']]["max"]))
-                new_sql = select_parameter(x, p, tokens, step, col_range, best_sql)
+                new_sql = select_parameter(x, p, tokens, step, col_range, best_sql) # 把x和p加入到best_sql中得到new sql.
                 err_new, err_best = compute_grad(best_sql, new_sql, type, target_value)
                 # print(err_new, err_best)
                 grad = (err_new - err_best)
-                if grad > max_grad:
+                if grad > max_grad:  # 选择最大梯度下降
                     best_sql = new_sql
                     max_grad = grad
                     ok = is_required_sql(best_sql, type, target_value, error)
@@ -384,8 +391,8 @@ def hillclimb_generate_queries(dbname, type, target_value, error, num_queries, t
                 ok_queries.add(best_sql)
 
                 with open(target_path, "a") as f:
-                    f.write(best_sql+"\n")
-
+                    f.write(erase_endl(best_sql)+";\n")
+                #print("? best_sql",best_sql,"!")
                 print("time:{};s_count:{};t_count:{}".format(str(time.time() - start_time), len(ok_queries), template_id))
                 # print(best_sql)
 
@@ -400,7 +407,7 @@ def hillclimb_generate_queries(dbname, type, target_value, error, num_queries, t
     exit()
 
 
-def cal_point_time(dbname, pc, error, N, type, log_path, query_to_path):
+def cal_point_time(dbname, pc, error, N, type, log_path, query_to_path): # pc : point的值(cost = pc-K ~ pc+K)
 
     print("Generating {} queries meet point {} constraint:{} with acceptable error {} to '{}'".format(N, type, pc,
                                                                                                       error, log_path))
@@ -423,9 +430,9 @@ def cal_point_time(dbname, pc, error, N, type, log_path, query_to_path):
     log.write("time:{};s_count:{};t_count:{}\n".format(str(time.time()), satisfied_count, total_count))
     low_bound = pc*(1 - error)
     up_bound = pc*(1 + error)
-    # while satisfied_count < N:
+    # while satisfied_count < N:satisfied_count
 
-    hillclimb_generate_queries(dbname, type, pc, error, N, query_to_path)
+    hillclimb_generate_queries(dbname, type, pc, error, N, query_to_path)  # 用爬山算法生成N个query.
     total_count += N
     queries = []
     with open(query_to_path, 'r') as f:
@@ -433,8 +440,8 @@ def cal_point_time(dbname, pc, error, N, type, log_path, query_to_path):
         for query in queries:
             try:
                 result, e_info = base.get_evaluate_query_info(dbname, query)
-                if result:
-                    if type == "cost":
+                if result:  # 如果可以估计query的代价
+                    if type == "cost":  # 分 cost / card 两种维度
                         if low_bound <= e_info['total_cost'] <= up_bound:
                             satisfied_count += 1
                             if satisfied_count % 100 == 0:
