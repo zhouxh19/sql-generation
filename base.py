@@ -49,9 +49,9 @@ class DataType(IntEnum):
 
 
 AGGREGATE_CONSTRAINTS = {
-    DataType.VALUE.value: ['count', 'max', 'min', 'avg', 'sum'],
-    DataType.VALUE.CHAR: ['count', 'max', 'min'],
-    DataType.VALUE.TIME: ['count', 'max', 'min']
+    DataType.VALUE: ['count', 'max', 'min', 'avg', 'sum'],
+    DataType.CHAR: ['count', 'max', 'min'],
+    DataType.TIME: ['count', 'max', 'min']
 }
 
 

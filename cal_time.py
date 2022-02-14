@@ -1,5 +1,8 @@
 import os
 import time
+
+import pymysql
+
 import base
 import sys
 import psycopg2
@@ -89,7 +92,6 @@ def generate_sql(template, predicates):
     sql = template
     for x,p in enumerate(predicates):
         sql = sql.replace("[{}]".format(x), predicates[x]["col"] + predicates[x]["op"] + str(predicates[x]["opand"]))
-
     return sql
 
 def fetch_predicates(sql):
@@ -534,7 +536,7 @@ if __name__ == '__main__':
     mtype = para[3]         # point/range
     N = int(para[4])
     cur_path = os.path.abspath('.')
-    db_path = cur_path + '/' + dbname + '/logfile'
+    db_path = os.path.join(cur_path, dbname ,'logfile')
     error = 0.2
     if mtype == 'point':
         # print('enter point')
@@ -544,8 +546,10 @@ if __name__ == '__main__':
         cal_point_time(dbname=dbname, type=ctype, N=N, pc=pc, error=error, log_path=log_path, query_to_path=tmp_path)
     elif mtype == 'range':
         rc = (int(para[5]), int(para[6]))
-        log_path = db_path + '/' + '{}_rc{}_{}_N{}'.format(ctype, rc[0], rc[1], N)
-        tmp_path = db_path + '/' + '{}_rc{}_{}_N{}_tmp'.format(ctype, rc[0], rc[1], N)
+        # print(db_path)
+        log_path = os.path.join(db_path,'{}_rc{}_{}_N{}'.format(ctype, rc[0], rc[1], N))
+        tmp_path = os.path.join(db_path,'{}_rc{}_{}_N{}_tmp'.format(ctype, rc[0], rc[1], N))
+        #print(log_path)
         cal_range_time(dbname=dbname, type=ctype, N=N, error=error, rc=rc, log_path=log_path, query_to_path=tmp_path)
     else:
         print("error")
