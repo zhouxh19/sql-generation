@@ -398,8 +398,8 @@ def hillclimb_generate_queries(dbname, type, target_value, error, num_queries, t
 
             if len(ok_queries) % (num_queries/100) == 0:
                 print("time:{};s_count:{};t_count:{}\n".format(str(time.time()-start_time), len(ok_queries), template_id))
-                with open(target_path, "a") as f:
-                    f.write("time:{};s_count:{};t_count:{}\n".format(str(time.time()-start_time), len(ok_queries), template_id))
+                # with open(target_path, "a") as f:
+                #    f.write("time:{};s_count:{};t_count:{}\n".format(str(time.time()-start_time), len(ok_queries), template_id))
         elif template_id % (100) == 0:
             print("time:{};s_count:{};t_count:{}\n".format(str(time.time() - start_time), len(ok_queries), template_id))
 
@@ -499,10 +499,9 @@ def cal_range_time(dbname, rc, error, N, type, log_path, query_to_path):
                 result, e_info = base.get_evaluate_query_info(dbname, query)
                 if result:
                     if type == "cost":
-                        if low_bound <= e_info['total_cost'] and e_info['total_cost'] <= up_bound:
+                        if low_bound <= e_info['total_cost'] and e_info['total_cost'] <= up_bound:  # 如果满足cost需求，把数字加上去
                             satisfied_count += 1
                             if satisfied_count % 100 == 0:
-
                                 log.write(
                                     "time:{};s_count:{};t_count:{}\n".format(str(time.time()), satisfied_count,
                                                                              total_count))
